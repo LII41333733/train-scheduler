@@ -6,7 +6,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css">
   <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
 
   <title>Train Scheduler</title>
 
@@ -44,7 +43,7 @@
                 </div>
 
                 <div class="col-md-5 mb-3">
-                  <label for="frequency">Frequency:</label>
+                  <label for="frequency">Frequency (minutes):</label>
                   <input type="number" class="form-control" id="frequency" aria-describedby="frequency">
                 </div>
 
@@ -69,7 +68,7 @@
           <tr>
             <th scope="col">Train Name</th>
             <th scope="col">Destination</th>
-            <th scope="col">Frequency</th>
+            <th scope="col">Frequency (minutes)</th>
             <th scope="col">Next Arrival</th>
             <th scope="col">Minutes Away</th>
           </tr>
@@ -80,22 +79,22 @@
     </div>
   </div>
 
-
-
-  <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/5.4.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/5.5.2/firebase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/moment.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.13.0/umd/popper.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.2/js/bootstrap.min.js"></script>
   <script>
 
-    const config = {
-      apiKey: "AIzaSyA_QypGPkcjPtylRDscf7-HQl8ribnFeIs",
-      authDomain: "time-sheet-55009.firebaseapp.com",
-      databaseURL: "https://time-sheet-55009.firebaseio.com",
-      storageBucket: "time-sheet-55009.appspot.com"
-    };
 
+    const config = {
+      apiKey: "AIzaSyC4jOrqN-8DBsh1QN1WsDB8UAOoZyDIoL0",
+      authDomain: "train-scheduler-1f276.firebaseapp.com",
+      databaseURL: "https://train-scheduler-1f276.firebaseio.com",
+      projectId: "train-scheduler-1f276",
+      storageBucket: "train-scheduler-1f276.appspot.com",
+      messagingSenderId: "136769953199"
+    };
     firebase.initializeApp(config);
 
     const database = firebase.database();
@@ -105,8 +104,13 @@
 
       const name = $("#name").val().trim();
       const destination = $("#destination").val().trim();
-      const firstTrain = moment($("#firstTrain").val().trim(), "HH:mm").format("X");
+      const firstTrain = $("#firstTrain").val().trim();
       const frequency = $("#frequency").val().trim();
+
+      // console.log(name)
+      // console.log(destination)
+      console.log(firstTrain)
+      // console.log(frequency)
 
       let trainCollection = {
         name: name,
@@ -126,18 +130,36 @@
 
 
     database.ref().on("child_added", function (snapshot) {
-      let _name = snapshot.val().name;
-      let _destination = snapshot.val().destination;
-      let _firstTrain = snapshot.val().firstTrain;
-      let _frequency = snapshot.val().frequency;
+      const _name = snapshot.val().name;
+      const _destination = snapshot.val().destination;
+      const _firstTrain = snapshot.val().firstTrain;
+      const _frequency = snapshot.val().frequency;
 
-      let $tableRow = $("<tRow>");
-      let $name = $("<td>").text(_name)
-      let $destination = $("<td>").text(_destination)
-      let $firstTrain = $("<td>").text(_firstTrain)
+      const firstConverted = moment(_firstTrain, "HH:mm").subtract(1, "years");
+      console.log(firstConverted)
+
+      // console.log(_firstTrain)
+      // console.log(_name)
+      // console.log(_destination)
+      // console.log(_frequency)
+      
+      const _difference = moment().diff(moment(firstConverted), "minutes");
+      // console.log(difference)
+      console.log(`Difference in time ${_difference}`);
+      const _remainder = _difference % _frequency;
+      console.log(_remainder)
+      const _minutesTilTrain = _frequency - _remainder
+
+      const _arrival = moment(moment().add(_minutesTilTrain, "minutes")).format("HH:mm")
+
+      let $tableRow = $("<tr>");
+      let $name = $("<td>").text(_name) //OK
+      let $destination = $("<td>").text(_destination) //OK
+      let $nextArrival = $("<td>").text(_arrival)
       let $frequency = $("<td>").text(_frequency)
+      let $minAway = $("<td>").text(_minutesTilTrain) //OK
 
-      $tableRow.append($name, $destination, $firstTrain, $frequency)
+      $tableRow.append($name, $destination, $frequency, $nextArrival, $minAway)
       $("#train-table > tbody").append($tableRow)
 
 
